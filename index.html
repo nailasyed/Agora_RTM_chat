@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Agora Rtm Chat</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- <link rel="stylesheet" href=""> -->
+        <style>
+            .main{
+                width: 25vw;
+               min-width: 500px;
+                margin:auto;
+                border: 1px solid grey;
+                height: 100vh;
+                overflow: hidden;
+                background-color: rgb(22, 24, 35);
+                /* display:flex; */
+            }
+            #messages{
+                position: absolute;
+                bottom: 0;
+                width: 100%;
+                /* min-width: 300px; */
+                /* height: 100px; */
+                font-size: 16px;
+                color: white;
+                flex:1;
+                flex-direction: column-reverse;
+                overflow: auto;
+                /* transform:scale(1,-1); */
+            }
+            #form{
+                height:10vh;
+                /* border:1px solid red; */
+                overflow: hidden;
+                background-color:dimgray;
+                
+            }
+            #form input{
+                /* outline: none; */
+                width:100%;
+                border: none;
+                padding: 10px 10px;
+                margin:10px 20px;
+                /* border-radius:50px 0; */
+                font-size: 16px;
+            }
+            .local{
+                min-width:100px;
+                /* text-align: left; */
+                background-color:dimgray;
+                border-radius: 5px;
+                padding: 0.1em 0.5em;
+                width: max-content;
+            }
+            .remote{
+                min-width:100px;
+                background-color:mediumpurple;
+                border-radius: 5px;
+                margin-left: auto;
+                text-align: right;
+                width: max-content;
+                padding: 0.1em 0.5em;
+                /* text-align: right; */
+            }
+            .wrapper{
+                position:relative;
+                overflow:auto;
+                height: 90vh;
+                
+            }
+            .spantimeO{
+                font-size: 12px;
+                color: lightgrey;
+                margin-top:5px;
+                margin-bottom:5px;
+                margin-left: auto;
+                float: right;
+            }
+            .spantimeI{
+                font-size: 12px;
+                margin-top:5px;
+                margin-bottom:5px;
+                color: lightgrey;
+                /* margin-left: auto; */
+            }
+        </style>
+    </head>
+    <body>
+        <div class="main">
+            
+            <div class="wrapper">
+                <div id="messages"></div>
+            </div>
+            <form id="form">
+                <input  type="text" name="message" placeholder="Type here..."/>
+            </form>
+            
+            <!-- <div id="rmessages outgoing"></div> -->
+        </div>
+                
+    </body>
+
+    <script type="text/javascript" src="agora-rtm-sdk-1.4.5.js"></script>
+    <script type="text/javascript">
+        let appId="<appId>";         //Add AppId and Token
+        let uid= String(Math.floor(Math.random()* 232));
+        let token= "<token>";
+        let channelName= 'main';
+        let messageElement;
+        let initiateRTM = async ()=>{
+            let client = await AgoraRTM.createInstance(appId);
+            await client.login({uid, token});
+        const channel= await client.createChannel(channelName);
+        await channel.join();
+        let chatMessages = document.getElementById('messages');
+
+        let form = document.getElementById('form');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            let message = e.target.message.value
+            await channel.sendMessage({text:message, type:'text'});
+            form.reset();
+            handleOutgoingMessage({text:message});         
+            
+        }) 
+
+        channel.on('ChannelMessage', (message, peerId)=>{
+            console.log('Message:', message);
+            handleIncomingMessage(message);
+            chatMessages.scrollTop= chatMessages.scrollHeight;
+            // messageElement.classList.add("remote");
+            
+        })
+        }
+        let handleIncomingMessage = async (message) => {
+            var today= new Date();
+            var n = today.toLocaleString([], { hour: '2-digit', minute: '2-digit' });
+            // var time = today.getHours() + ":" + today.getMinutes();
+            const listItem= document.createElement('div');
+            const div = document.createElement('div');
+            div.classList.add('remote');
+            div.innerHTML= `<p>${message.text}</p>`;
+            const dspan = document.createElement('div');
+            dspan.classList.add('spantimeO');
+            dspan.innerHTML= `<span>Delivered at ${n}</span>`;            
+            const listElement=document.querySelector('#messages');
+            listItem.innerHTML+= div.outerHTML + dspan.outerHTML;
+            listElement.appendChild(listItem);
+            
+        }
+        let handleOutgoingMessage= async(msg) =>{
+            
+            var today= new Date();
+            var n = today.toLocaleString([], { hour: '2-digit', minute: '2-digit' });
+            // var time = today.getHours() + ":" + today.getMinutes();
+            const listItem= document.createElement('div');
+            const div = document.createElement('div');
+            div.classList.add('local');
+            div.innerHTML= `<p>${msg.text}</p>`;
+            const dspan = document.createElement('div');
+            dspan.classList.add('spantimeI');
+            dspan.innerHTML= `<span>Delivered at ${n}</span>`;            
+            const listElement=document.querySelector('#messages');
+            listItem.innerHTML+= div.outerHTML + dspan.outerHTML;
+            listElement.appendChild(listItem);
+            
+
+
+        }
+        
+
+        initiateRTM();
+    </script>
+</html>
